@@ -10,7 +10,7 @@
 <body>
   <h1>P5S Charactor Custume Changer</h1>
   <div id="app">
-    <label>Select 'game.exe' in P5S game folder: <input type="file" ref="file" accept="game.exe;*.exe" @change="readFile" :disabled="values" /></label>
+    <label>Select 'game.exe' in P5S game folder: <input type="file" ref="file" accept=".exe" @change="readFile" :disabled="!!values" /></label>
 
     <table border="1" style="width: 500px; margin-top: 16px" v-if="values">
       <tr>
@@ -27,7 +27,10 @@
       </tr>
     </table>
 
-    <input v-if="values" type="button" value="Patch" @click="saveFile" style="margin-top: 16px" />
+    <template v-if="values">
+      <p>DO BACKUP THE ORIGINAL GAME FILE!!!</p>
+      <input type="button" value="Patch" @click="saveFile" />
+    </template>
   </div>
   <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.0.11/vue.global.prod.js"></script>
   <script>
@@ -37,16 +40,13 @@
     const addresses = {
       Joker: 0x0191E403,
       Skull: 0x0191E463,
-      // No graph
-      // Mona: 0x0191E4C3,
+      Mona: 0x0191E4C3,
       Panther: 0x0191E523,
-      // No enough space
-      // Fox: 0x0191E583,
+      Fox: 0x0191E583,
       Queen: 0x0191E5DB,
       Noir: 0x0191E63B,
       Navi: 0x0191E69B,
-      // No graph
-      // Sophie: 0x0191E6FB,
+      Sophie: 0x0191E6FB,
     };
 
     const options = {
@@ -67,9 +67,6 @@
       Mona: {
         Normal: 'H0002_Mona',
         Daily: 'H0502_Morgana_Daily',
-        Swim: 'H0522_Morgana_Swim',
-        Yukata: 'H0532_Morgana_Yukata',
-        Towel: 'H0542_Morgana_Towel',
       },
       Panther: {
         Normal: 'H0003_Panther',
@@ -111,11 +108,9 @@
         Daily: 'H0508_Sophia_Daily',
       },
     };
-    const valueLength = 21;
     Object.values(options).forEach(config => {
       Object.entries(config).forEach(([key, value]) => {
-        value += '\xEF\xBC\xBD';
-        value = value.padEnd(valueLength, '\0');
+        value += '\xEF\xBC\xBD\0';
         config[key] = value;
       });
     });
@@ -139,7 +134,12 @@
 
           const values = {};
           Object.entries(addresses).forEach(/** @param {[string, number]} */([name, addr]) => {
-            values[name] = String.fromCharCode(...arr.slice(addr, addr + valueLength));
+            values[name] = '';
+            for (let i = 0; i < 25; ++i) {
+              const c = arr[addr + i];
+              values[name] += String.fromCharCode(c);
+              if (c === 0) break;
+            }
           });
           this.values = values;
         },
