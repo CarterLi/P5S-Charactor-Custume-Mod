@@ -12,13 +12,15 @@
   <div id="app">
     <label>Select 'game.exe' in P5S game folder: <input type="file" ref="file" accept=".exe" @change="readFile" :disabled="!!values" /></label>
 
-    <table border="1" style="width: 500px; margin-top: 16px" v-if="values">
+    <table border="1" style="width: 500px; margin-top: 16px; font-family: monospace;" v-if="values">
       <tr>
         <th>Charactor</th>
+        <th>Address</th>
         <th>Custume</th>
       </tr>
       <tr v-for="name of charactors" :key="name">
         <td v-text="name"></td>
+        <td>0x0{{addresses[name].toString(16).toUpperCase()}}</td>
         <td>
           <select v-model="values[name]" style="width: 100%">
             <option v-for="(str, custume) in options[name]" :key="custume" :value="str">{{custume}}</option>
@@ -32,22 +34,10 @@
       <input type="button" value="Patch" @click="saveFile" />
     </template>
   </div>
-  <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.0.11/vue.global.prod.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.2.26/vue.global.prod.js"></script>
   <script>
     'use strict';
     const { markRaw, createApp } = Vue;
-
-    const addresses = {
-      Joker: 0x0191E403,
-      Skull: 0x0191E463,
-      Mona: 0x0191E4C3,
-      Panther: 0x0191E523,
-      Fox: 0x0191E583,
-      Queen: 0x0191E5DB,
-      Noir: 0x0191E63B,
-      Navi: 0x0191E69B,
-      Sophie: 0x0191E6FB,
-    };
 
     const options = {
       Joker: {
@@ -118,8 +108,9 @@
       data() {
         return {
           options: markRaw(options),
-          charactors: markRaw(Object.keys(addresses)),
+          charactors: markRaw(Object.keys(options)),
           values: null,
+          addresses: null,
         };
       },
       methods: {
@@ -127,13 +118,31 @@
           /** @type {HTMLInputElement} */
           const input = this.$refs.file;
           const arr = this.arr = new Uint8Array(await input.files[0].arrayBuffer());
-          if (arr.length !== 39259288 || arr[0] !== 77) {
-            alert('Invalid file found. Only Ver.1.00 is supported. File size: 38340KB');
+          const baseStr = 'H6011_Valjean_Chain_R\xEF\xBC\xBD\0';
+          const baseAddr = arr.findIndex((value, index, arr) => {
+            for (let i = 0; i < baseStr.length; ++i) {
+              if (arr[index + i] !== baseStr.codePointAt(i)) return;
+            }
+            return true;
+          });
+          if (baseAddr < 0) {
+            alert('Unknown version found');
             return;
           }
+          this.addresses = markRaw({
+            Joker:   baseAddr + 0x68 + 0x60 * 0,
+            Skull:   baseAddr + 0x68 + 0x60 * 1,
+            Mona:    baseAddr + 0x68 + 0x60 * 2,
+            Panther: baseAddr + 0x68 + 0x60 * 3,
+            Fox:     baseAddr + 0x68 + 0x60 * 4,  // Fox uses 0x58 bytes
+            Queen:   baseAddr + 0x68 + 0x60 * 4 + 0x58,
+            Noir:    baseAddr + 0x68 + 0x60 * 5 + 0x58,
+            Navi:    baseAddr + 0x68 + 0x60 * 6 + 0x58,
+            Sophie:  baseAddr + 0x68 + 0x60 * 7 + 0x58,
+          });
 
           const values = {};
-          Object.entries(addresses).forEach(/** @param {[string, number]} */([name, addr]) => {
+          Object.entries(this.addresses).forEach(/** @param {[string, number]} */([name, addr]) => {
             values[name] = '';
             for (let i = 0; i < 25; ++i) {
               const c = arr[addr + i];
@@ -147,7 +156,7 @@
           /** @type {Uint8Array} */
           const arr = this.arr;
           Object.entries(this.values).forEach(/** @param {[string, string]} */([name, str]) => {
-            arr.set([...str].map(x => x.charCodeAt(0)), addresses[name]);
+            arr.set([...str].map(x => x.charCodeAt(0)), this.addresses[name]);
           });
           const blob = new Blob([arr.buffer]);
           const url = URL.createObjectURL(blob);
