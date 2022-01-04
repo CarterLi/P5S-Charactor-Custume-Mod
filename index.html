@@ -5,33 +5,39 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>P5S Charactor Custume Mod</title>
-  <style>* { box-sizing: border-box; }</style>
+  <style>* { box-sizing: border-box; } :root:lang(en) :lang(zh), :root:lang(zh) :lang(en) { display: none }</style>
+  <script>if (navigator.language.startsWith('zh')) document.documentElement.lang = 'zh'</script>
 </head>
 <body>
-  <h1>P5S Charactor Custume Changer</h1>
+  <h1><span lang="en">P5S Charactor Custume Changer</span><span lang="zh">P5S换装MOD</span></h1>
   <div id="app">
-    <label>Select 'game.exe' in P5S game folder: <input type="file" ref="file" accept=".exe" @change="readFile" :disabled="!!values" /></label>
-
-    <table border="1" style="width: 500px; margin-top: 16px; font-family: monospace;" v-if="values">
-      <tr>
-        <th>Charactor</th>
-        <th>Address</th>
-        <th>Custume</th>
-      </tr>
-      <tr v-for="name of charactors" :key="name">
-        <td v-text="name"></td>
-        <td>0x0{{addresses[name].toString(16).toUpperCase()}}</td>
-        <td>
-          <select v-model="values[name]" style="width: 100%">
-            <option v-for="(str, custume) in options[name]" :key="custume" :value="str">{{custume}}</option>
-          </select>
-        </td>
-      </tr>
-    </table>
+    <label>
+      <span lang="en">Select 'game.exe' in P5S game folder:</span><span lang="zh">选择P5S游戏目录中的 'game.exe' 文件：</span>
+      <input type="file" ref="file" accept=".exe" @change="readFile" :disabled="!!values" />
+    </label>
 
     <template v-if="values">
-      <p>DO BACKUP THE ORIGINAL GAME FILE!!!</p>
-      <input type="button" value="Patch" @click="saveFile" />
+      <table border="1" style="width: 500px; margin-top: 16px; font-family: monospace;">
+        <tr>
+          <th><span lang="en">Charactor</span><span lang="zh">角色</span></th>
+          <th><span lang="en">Address</span><span lang="zh">地址</span></th>
+          <th><span lang="en">Custume</span><span lang="zh">装扮</span></th>
+        </tr>
+        <tr v-for="name of charactors" :key="name">
+          <td v-text="name"></td>
+          <td>0x0{{addresses[name].toString(16).toUpperCase()}}</td>
+          <td>
+            <select v-model="values[name]" style="width: 100%">
+              <option v-for="(str, custume) in options[name]" :key="custume" :value="str">{{custume}}</option>
+            </select>
+          </td>
+        </tr>
+      </table>
+    </template>
+
+    <template v-if="values">
+      <p><span lang="en">DO BACKUP THE ORIGINAL GAME FILE!!!</span><span lang="zh">请备份原始文件！！！</span></p>
+      <button type="button" @click="saveFile"><span lang="en">Patch</span><span lang="zh">打补丁</span></button>
     </template>
   </div>
   <script src="https://cdn.bootcdn.net/ajax/libs/vue/3.2.26/vue.global.prod.js"></script>
